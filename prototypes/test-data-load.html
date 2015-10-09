@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+
+<head>
+    <script src="../lib/jquery/jquery.js"></script>
+    <script src="../lib/d3/d3.js"></script>
+
+    <script>
+        String.prototype.capitalize = function () {
+            return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
+        }
+
+        var app = new function () {
+            var app = this;
+
+            app.hurricanes = new function () {
+                var This = this;
+                var values = [];
+                This.add = function (hurrs) {
+                    values = values.concat(hurrs);
+                    This.dataChanged();
+                };
+                This.getValues = function () {
+                    return values;
+                };
+
+                This.listeners = [];
+                This.addListener = function (listener) {
+                    This.listeners.push(listener);
+                };
+                This.dataChanged = function () {
+                    This.listeners.forEach(function (l) {
+                        l();
+                    });
+                };
+            };
+
+            app.loadHurdat = function () {
+                function nuller(val) {
+                    return val === -999 ? null : val;
+                }
+
+                function parseTrack(row) {
+                    var track = {};
+                    track.date = row[0];
+                    track.time = +row[1];
+                    track.recordIdentifier = row[2];
+                    track.systemStatus = row[3].trim();
+                    track.coordinates = [row[4], row[5]];
+                    track.maxWindSpeed = nuller(+row[6]);
+                    track.minPressure = nuller(+row[7]);
+                    track.radii = {
+                        34: [+row[8], +row[9], +row[10], +row[11]].map(nuller),
+                        50: [+row[12], +row[13], +row[14], +row[15]].map(nuller),
+                        64: [+row[16], +row[17], +row[18], +row[19]].map(nuller),
+                    };
+                    return track;
+                }
+
+                function parseHurdat(rows) {
+                    var hurricanes = [];
+                    for (var i = 0; i < rows.length;) {
+                        var row = rows[i];
+
+                        var hurricane = {};
+                        hurricane.basin = row[0].substring(0, 2);
+                        hurricane.cycloneNumber = +row[0].substring(2, 4);
+                        hurricane.year = +row[0].substring(4, 8);
+                        hurricane.name = row[1].trim().capitalize();
+                        var numEntries = +row[2];
+                        i++;
+
+                        hurricane.track = [];
+                        for (var j = 0; j < numEntries; j++)
+                            hurricane.track[j] = parseTrack(rows[i + j]);
+                        i += numEntries;
+                        hurricanes.push(hurricane);
+                    }
+                    return hurricanes;
+                }
+
+                d3.text("../data/hurdat2-atlantic.csv", function (text) {
+                    var rows = d3.csv.parseRows(text);
+                    app.hurdat1 = parseHurdat(rows);
+                    app.hurricanes.add(app.hurdat1);
+                });
+                d3.text("../data/hurdat2-pacific.csv", function (text) {
+                    var rows = d3.csv.parseRows(text);
+                    app.hurdat2 = parseHurdat(rows);
+                    app.hurricanes.add(app.hurdat2);
+                });
+            };
+        };
+        /*function makeClass(members) {
+                    var cls = members["constructor"];
+                    for (var m in members)
+                        if (m !== "constructor")
+                            cls.prototype[m] = members[m];
+                    return cls;
+                }
+
+                var app = new function () {
+                    this.Person = makeClass({
+                        constructor: function (name) {
+                            this.name = name;
+                        },
+                        speak: function () {
+                            alert("Hi! My name is " + this.name);
+                            this.doTask();
+                        },
+                        doTask: function () {
+                            alert("Woot!");
+                        }
+                    });
+                };*/
+
+        $(function () {
+            app.hurricanes.addListener(function () {
+                d3.selectAll("#output")
+                    .selectAll("div")
+                    .data(app.hurricanes.getValues())
+                    .text(function (d) {
+                        return d.name;
+                    })
+                    .enter()
+                    .append("div");
+            });
+            app.loadHurdat();
+
+            //var p = new app.Person("Furqan");
+            //p.speak();
+
+            /*d3.text("../data/hurdat2-atlantic.txt", function (error, data) {
+                console.log(data);
+            });*/
+
+            /*d3.csv.parseRows("../data/hurdat2-atlantic.txt",
+                function (error, data) {
+                    console.log(data);
+                });*/
+        });
+    </script>
+</head>
+
+<body>
+    <div id="output"></div>
+</body>
+
+</html>
