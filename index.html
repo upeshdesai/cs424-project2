@@ -20,6 +20,9 @@
             width: 100%;
         }
     </style>
+
+    <script src="lib/d3/d3.min.js"></script>
+    <script src="src/loadHurdat.js"></script>
 </head>
 
 <body>
@@ -37,6 +40,28 @@
         //.fitBounds(maxBounds);
 
         L.control.fullscreen().addTo(map);
+
+        loadHurdat("./data/hurdat2-atlantic.csv", function (d) {
+            function addTrack(track, map) {
+                var pointList = [];
+
+                track.forEach(function (tp) {
+                    var coords = tp.coordinates;
+                    pointList.push(new L.LatLng(coords[0], coords[1]));
+                });
+
+                new L.Polyline(pointList, {
+                    color: 'red',
+                    weight: 3,
+                    opacity: 0.5,
+                    smoothFactor: 1
+                }).addTo(map);
+            }
+
+            for (var i = 0; i < 100; i++)
+                addTrack(d[i].track, map);
+
+        });
     </script>
 </body>
 
