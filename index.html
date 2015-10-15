@@ -21,6 +21,7 @@
         }
     </style>
 
+    <script src="lib/jquery/jquery.min.js"></script>
     <script src="lib/d3/d3.min.js"></script>
     <script src="src/loadHurdat.js"></script>
 </head>
@@ -31,17 +32,30 @@
 
     <div id='map'></div>
 
+    <div id="timeline-controls" style="position:absolute; left: 10px; bottom: 30px; width:95%">
+        <button class="timeline-controls-backward">&lt;&lt;</button>
+        <button class="timeline-controls-play">&gt;</button>
+        <button class="timeline-controls-pause">||</button>
+        <button class="timeline-controls-forward">&gt;&gt;</button>
+        <input class="timeline-controls-time" type="text" size="10">
+        <br>
+        <input class="timeline-controls-slider" type="range" style="width: 100%">
+    </div>
+
     <script>
         var mapboxAccessToken = "pk.eyJ1IjoiZmFmYXJvIiwiYSI6ImNpZnJxaXZ5dDBveXVzbG0wbm5kNjByNXQifQ.1ziviq2_srmlbk7VkiVegA";
         var mapid = 'fafaro.nn73cpe2';
         L.mapbox.accessToken = mapboxAccessToken;
         var map = L.mapbox.map('map', mapid)
             .setView([39.50, -98.35], 3);
-        //.fitBounds(maxBounds);
 
         L.control.fullscreen().addTo(map);
 
         loadHurdat("./data/hurdat2-atlantic.csv", function (d) {
+            function coordsToLatLng(x) {
+                return new L.LatLng(x[0], x[1]);
+            }
+
             function addTrack(track, map) {
                 var pointList = [];
 
@@ -50,17 +64,238 @@
                     pointList.push(new L.LatLng(coords[0], coords[1]));
                 });
 
-                new L.Polyline(pointList, {
-                    color: 'red',
+                var line = new L.Polyline(pointList, {
+                    color: 'black',
                     weight: 3,
-                    opacity: 0.5,
+                    opacity: 0.2,
                     smoothFactor: 1
-                }).addTo(map);
+                });
+                line.addTo(map);
+                return line;
             }
 
-            for (var i = 0; i < 100; i++)
-                addTrack(d[i].track, map);
+            function add100Tracks(d, map) {
+                for (var i = 0; i < 100; i++)
+                    addTrack(d[i].track, map);
+            }
 
+            function prepMapForD3(map) {
+                var mapEx = {};
+
+                var svg = d3.select(map.getPanes().overlayPane).append("svg"),
+                    g = svg.append("g").attr("class", "leaflet-zoom-hide");
+
+                g.append("circle").attr({
+                    cx: 0,
+                    cy: 0,
+                    r: 1000
+                });
+
+                var transform = d3.geo.transform({
+                        point: projectPoint
+                    }),
+                    path = d3.geo.path().projection(transform);
+
+                /*var feature = g.selectAll("path")
+                    .data(collection.features)
+                    .enter().append("path");*/
+
+                map.on("viewreset", reset);
+                reset();
+
+                // Reposition the SVG to cover the features.
+                function reset() {
+                    /*var bounds = path.bounds(collection),
+                        topLeft = bounds[0],
+                        bottomRight = bounds[1];*/
+                    var bottomRight = [13, -38],
+                        topLeft = [56, -132];
+
+
+                    svg.attr("width", Math.abs(bottomRight[0] - topLeft[0]))
+                        .attr("height", Math.abs(bottomRight[1] - topLeft[1]))
+                        .style("left", topLeft[0] + "px")
+                        .style("top", topLeft[1] + "px");
+
+                    g.attr("transform", "translate(" + -topLeft[0] + "," + -topLeft[1] + ")");
+
+                    //feature.attr("d", path);
+                }
+
+                // Use Leaflet to implement a D3 geometric transformation.
+                function projectPoint(x, y) {
+                    var point = map.latLngToLayerPoint(new L.LatLng(y, x));
+                    this.stream.point(point.x, point.y);
+                }
+
+                return mapEx;
+            }
+
+            //prepMapForD3(map);
+
+            /*var dataContainer = function () {
+                // Create an in memory only element of type 'custom'
+                var detachedContainer = document.createElement("custom");
+
+                // Create a d3 selection for the detached container. We won't
+                // actually be attaching it to the DOM.
+                return d3.select(detachedContainer);
+            }();*/
+
+            /*var circle = L.circle([0, 0], 5000);
+            circle.addTo(map);*/
+
+            var tmin = Date.UTC(1871, 1, 1);
+            var t = tmin;
+            var tspeed = 1;
+            var tmax = Date.UTC(2015, 1, 1);
+
+            initSlider();
+            updateTimeControl();
+            updateSlider();
+
+            function initSlider() {
+                var slider = $("#timeline-controls .timeline-controls-slider");
+                slider.attr("min", tmin);
+                slider.attr("max", tmax);
+                slider.on('input', function () {
+                    $(this).trigger('change');
+                });
+                slider.change(function (e, ui) {
+                    t = +slider.val();
+                    updateTimeControl();
+                    updateDisplay();
+                });
+            }
+
+            function updateTimeControl() {
+                function pad(n, width, z) {
+                    z = z || '0';
+                    n = n + '';
+                    return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+                }
+
+                function dateFormat(d) {
+                    //return d.getUTCFullYear() + "-" + (d.getUTCMonth() + 1) + "-" + (d.getUTCDate() + 1);
+                    return pad(d.getUTCMonth() + 1, 2) + "/" + pad(d.getUTCDate() + 1, 2) + "/" + d.getUTCFullYear();
+                }
+
+                $("#timeline-controls .timeline-controls-time").val(dateFormat(new Date(t)));
+            }
+
+            function updateSlider() {
+                $("#timeline-controls .timeline-controls-slider").val(t);
+
+            }
+
+            var vizObjects = [];
+
+            function updateDisplay() {
+                vizObjects.forEach(function (obj) {
+                    map.removeLayer(obj);
+                });
+                d.forEach(function (h) {
+                    if (t < h.track[0].date || t > h.track[h.track.length - 1].date)
+                        return;
+
+                    vizObjects.push(addTrack(h.track, map));
+
+                    var found = 0;
+                    for (var i = 0; i < h.track.length; i++)
+                        if (h.track[i].date >= t) {
+                            found = i;
+                            break;
+                        }
+
+                    var tp1, tp2;
+                    var date1, date2;
+                    if (h.track[found].date === t) {
+                        tp1 = h.track[found];
+                        date1 = h.track[found].date;
+                        tp2 = tp1;
+                        date2 = date1;
+                    } else {
+                        tp1 = h.track[found - 1];
+                        tp2 = h.track[found];
+                        date1 = h.track[found - 1].date;
+                        date2 = h.track[found].date;
+                    }
+
+                    var l = (date2 - t) / (date2 - date1);
+                    var m = 1.0 - l;
+                    var newcoords = [tp1.coordinates[0] * l + tp2.coordinates[0] * m,
+                        tp1.coordinates[1] * l + tp2.coordinates[1] * m];
+                    if (isNaN(newcoords[0]) || isNaN(newcoords[1])) return;
+                    var c = L.circle(newcoords, 100000, {
+                        color: "red",
+                        fillColor: "red",
+                        fillOpacity: 0.5,
+                        stroke: true,
+                        fill: true
+                    });
+                    c.addTo(map);
+                    vizObjects.push(c);
+                });
+            }
+
+
+            function tickUpdate() {
+                updateTimeControl();
+                updateSlider();
+                updateDisplay();
+                //var x = circle.getLatLng();
+                //circle.setLatLng(new L.latLng(x.lat, 30 + i * 0.01));
+                //if (i < 100) {
+                //    addTrack(d[i].track, map);
+                //}
+                /*if (t < tmax) {
+                    dataContainer.selectAll("custom.circle")
+                        .data(d)
+                        .filter(function (h) {
+                            return h.track[0].date <= t && h.track[h.length - 1].date >= t;
+                        })
+
+                    .enter()
+                        .append("custom")
+                        .classed("circle", true)
+                        .each(function (h) {
+                            h.customCircle = L.circle(coordsToLatLng(h.track[0].coordinates), 1000);
+                            h.customCircle.addTo(map);
+                        })
+
+                    .exit()
+                        .each(function (h) {
+                            map.removeLayer(h.customCircle);
+                            h.customCircle = null;
+                        });
+                }*/
+                var tinc = 3 * 60 * 60 * 1000 * tspeed;
+                t += tinc;
+                if (t > tmax) t = tmin;
+            }
+
+            // Hook up timeline-controls
+
+            (function () {
+                var timer = null;
+
+                $("#timeline-controls .timeline-controls-pause").click(function () {
+                    if (timer !== null) {
+                        window.clearInterval(timer);
+                        timer = null;
+                    }
+                });
+                $("#timeline-controls .timeline-controls-play").click(function () {
+                    timer = window.setInterval(tickUpdate, 10);
+                });
+                $("#timeline-controls .timeline-controls-forward").click(function () {
+                    tspeed *= 2;
+                });
+                $("#timeline-controls .timeline-controls-backward").click(function () {
+                    tspeed *= 0.5;
+                });
+
+            })();
         });
     </script>
 </body>

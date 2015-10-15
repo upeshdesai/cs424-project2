@@ -16,10 +16,18 @@ function loadHurdat(path, onLoad) {
         return x;
     }
 
+    function parseDate(x, y) {
+        var year = x.substr(0, 4);
+        var month = x.substr(4, 2);
+        var day = x.substr(6, 2);
+        var hour = Math.floor(y / 100);
+        var minute = y % 100;
+        return Date.UTC(year, month, day, hour, minute, 0, 0);
+    }
+
     function parseTrack(row) {
         var track = {};
-        track.date = row[0];
-        track.time = +row[1];
+        track.date = parseDate(row[0], +row[1]);
         track.recordIdentifier = row[2];
         track.systemStatus = row[3].trim();
         track.coordinates = [parseLatLng(row[4]), parseLatLng(row[5])];
