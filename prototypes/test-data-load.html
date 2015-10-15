@@ -90,6 +90,49 @@
                     app.hurricanes.add(app.hurdat2);
                 });
             };
+
+            app.hurricaneList = new function () {
+                var This = this;
+                This.values = new function () {
+                    var valuesObj = this;
+                    var v = [];
+                    valuesObj.set = function (x) {
+                        v = x;
+                        onChanged();
+                    };
+                    valuesObj.get = function () {
+                        return v;
+                    };
+
+                    var listeners = [];
+                    valuesObj.addListener = function (l) {
+                        listeners.push(l);
+                    };
+
+                    function onChanged() {
+                        listeners.forEach(function (l) {
+                            l();
+                        });
+                    }
+                };
+                This.values.set(app.hurricanes.getValues());
+
+                var currFilter = function (x) {
+                    return true;
+                }
+                This.setFilter = function (filter) {
+                    currFilter = filter;
+                    reapplyFilter();
+                };
+
+                function reapplyFilter() {
+                    This.values.set(app.hurricanes.getValues().filter(currFilter));
+                }
+                app.hurricanes.addListener(function () {
+                    reapplyFilter();
+                });
+
+            };
         };
         /*function makeClass(members) {
                     var cls = members["constructor"];
@@ -115,12 +158,12 @@
                 };*/
 
         $(function () {
-            app.hurricanes.addListener(function () {
+            app.hurricaneList.values.addListener(function () {
                 d3.selectAll("#output")
                     .selectAll("div")
-                    .data(app.hurricanes.getValues())
+                    .data(app.hurricaneList.values.get())
                     .text(function (d) {
-                        return d.name;
+                        return d.name + " " + d.cycloneNumber;
                     })
                     .enter()
                     .append("div");
