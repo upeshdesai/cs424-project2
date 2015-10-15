@@ -1,46 +1,42 @@
-<!doctype html>
-
-<html lang="en">
+<!DOCTYPE html>
+<html>
 
 <head>
-    <meta charset="utf-8">
-
-    <title>Leaflet.js Example</title>
-    <meta name="description" content="First example">
-    <meta name="author" content="Furqan Farooqui">
-
-    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
-    <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
-
-    <style type="text/css">
+    <meta charset=utf-8 />
+    <title>Leaflet Fullscreen</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        
         #map {
-            height: 180px;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
         }
     </style>
 </head>
 
 <body>
-    <div id="map"></div>
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v0.0.4/Leaflet.fullscreen.min.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v0.0.4/leaflet.fullscreen.css' rel='stylesheet' />
+
+    <div id='map'></div>
 
     <script>
-        var map = L.map('map').setView([51.505, -0.09], 13);
-        L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="http://osm.org/copyright" title="OpenStreetMap" target="_blank">OpenStreetMap</a> contributors | Tiles Courtesy of <a href="http://www.mapquest.com/" title="MapQuest" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png" width="16" height="16">',
-            subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
-        }).addTo(map);
+        var mapboxAccessToken = "pk.eyJ1IjoiZmFmYXJvIiwiYSI6ImNpZnJxaXZ5dDBveXVzbG0wbm5kNjByNXQifQ.1ziviq2_srmlbk7VkiVegA";
+        var mapid = 'fafaro.nn73cpe2';
+        L.mapbox.accessToken = mapboxAccessToken;
+        var map = L.mapbox.map('map', mapid)
+            .setView([39.50, -98.35], 3);
+        //.fitBounds(maxBounds);
 
-        var marker = L.marker([51.5, -0.09]).addTo(map);
-        var circle = L.circle([51.508, -0.11], 500, {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map);
-
-        var polygon = L.polygon([
-            [51.509, -0.08],
-            [51.503, -0.06],
-            [51.51, -0.047]
-        ]).addTo(map);
+        L.control.fullscreen().addTo(map);
     </script>
 </body>
 
