@@ -4,16 +4,24 @@
 /// <reference path="common.ts" />
 
 var app: App;
-$(() => { app = new App(); });
+$(() => { app = new App(); app.init(); });
 
 class App {
-    hurricaneData = new HurricaneData();
-    hurricaneList = new HurricaneList();
-    hurricaneMap = new HurricaneMap();
-    hurricaneCountGraph = new HurricaneCountGraph();
-    HurricaneIntensityGraph = new HurricaneIntensityGraph();
+    public hurricaneData: HurricaneData;
+    public hurricaneList: HurricaneList;
+    public hurricaneMap: HurricaneMap;
+    public hurricaneCountGraph: HurricaneCountGraph;
+    public hurricaneIntensityGraph: HurricaneIntensityGraph;
 
-    constructor() {
+    public constructor() {
+    }
+
+    public init() {
+        this.hurricaneData = new HurricaneData();
+        this.hurricaneList = new HurricaneList();
+        this.hurricaneMap = new HurricaneMap();
+        this.hurricaneCountGraph = new HurricaneCountGraph();
+        this.hurricaneIntensityGraph = new HurricaneIntensityGraph();
     }
 }
 
@@ -163,11 +171,13 @@ class HurricaneMap {
         var map = L.map("HurricaneMap").setView([51.5, -0.09], 13);
         /*L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);*/        L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+        }).addTo(map);*/
+        L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
             subdomains: ['a', 'b', 'c', 'd'],
             maxZoom: 19
-        }).addTo(map);    }
+        }).addTo(map);
+    }
 }
 
 class HurricaneCountGraph {

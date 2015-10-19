@@ -3,15 +3,17 @@
 /// <reference path="lib/leaflet/leaflet.d.ts" />
 /// <reference path="common.ts" />
 var app;
-$(function () { app = new App(); });
+$(function () { app = new App(); app.init(); });
 var App = (function () {
     function App() {
+    }
+    App.prototype.init = function () {
         this.hurricaneData = new HurricaneData();
         this.hurricaneList = new HurricaneList();
         this.hurricaneMap = new HurricaneMap();
         this.hurricaneCountGraph = new HurricaneCountGraph();
-        this.HurricaneIntensityGraph = new HurricaneIntensityGraph();
-    }
+        this.hurricaneIntensityGraph = new HurricaneIntensityGraph();
+    };
     return App;
 })();
 var HurricaneData = (function () {
