@@ -181,6 +181,96 @@ class HurricaneMap {
 }
 
 class HurricaneCountGraph {
+    constructor() {
+        this.initUI();
+    }
+
+    private initUI() {
+
+    }
+
+    public createChart() {
+        
+        // count hurricanes per year
+        var hurPerYear = countYears(app.hurricaneData.Hurricanes);
+
+        // create bar chart by passing this array
+        barChart(hurPerYear);
+
+        /* FUNCTIONS */
+
+        function barChart(yearData) {
+            //var data = {}; // placekeeper, can't figure out how data structure 	
+
+            //scale to fit
+            var margin = { top: 20, right: 30, bottom: 30, left: 40 },
+                width = 960 - margin.left - margin.right,
+                height = 500 - margin.top - margin.bottom;
+
+            var x = d3.scale.linear()
+                .range([0, width]); //scale
+
+            var y = d3.scale.linear()
+                .range([height, 0]); // will need to scale
+
+            var chart = d3.select(".chart")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var xAxis = d3.svg.axis()
+                .scale(x)
+                .orient("bottom");
+
+            var yAxis = d3.svg.axis()
+                .scale(y)
+                .orient("left");
+            //d3.tsv("data.tsv", type, function(error, data) {
+
+            x.domain([1871, 2015]); // pull year numbers from data Structure 
+            y.domain([0, d3.max(yearData, function (d) {return d.value })]); // Pull max number of hurricanes in a year from data; something like hurricanes.perYear?
+
+            var barWidth = width / yearData.length;// change to fit DS
+
+            chart.append("g") // append xAxis
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(xAxis);
+
+            chart.append("g") // append yAxis
+                .attr("class", "y axis")
+                .call(yAxis);
+
+            chart.selectAll(".bar")
+                .data(yearData) //pull from our DS
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", function (d) { return x(d.value); }) // Pull from our DS
+                .attr("y", function (d) { return y(d.value); }) // Pull from our DS
+                .attr("height", function (d) { return height - y(d.value); }) // Pull from our DS
+                .attr("width", barWidth);
+            //});
+        }
+
+        function countYears(d) { // helper function to count hurricanes per year
+            var yearCounts = new Array(145); // static since we have data from 1871 - 2015
+            for (var i = 0; i < 145; i++) {
+                yearCounts[i] = 0;
+            }
+
+            for (var i = 0; i <= d.length; i++) {
+
+                yearCounts[d[i].year - 1871] += 1;
+
+            }
+
+            return yearCounts;
+
+        }
+    }
+
+
 }
 
 class HurricaneIntensityGraph {
