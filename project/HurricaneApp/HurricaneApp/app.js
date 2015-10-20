@@ -240,6 +240,16 @@ var HurricaneCountGraph = (function () {
             .style("width", function (d) { return x(d) + "px"; })
             .text(function (d) { return d; });
     };
+    HurricaneCountGraph.prototype.countYears = function (d) {
+        var yearCounts = new Array(145); // static since we have data from 1871 - 2015
+        for (var i = 0; i < 145; i++) {
+            yearCounts[i] = 0;
+        }
+        for (var i = 0; i <= d.length; i++) {
+            yearCounts[d[i].year - 1871] += 1;
+        }
+        return yearCounts;
+    };
     return HurricaneCountGraph;
 })();
 var HurricaneIntensityGraph = (function () {
