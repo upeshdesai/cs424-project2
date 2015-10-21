@@ -187,12 +187,14 @@ class HurricaneCountGraph {
 
     private initUI() {
         // count hurricanes per year
-        var hurPerYear = countYears(app.hurricaneData.Hurricanes);
+        var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "Atlantic");
+        var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "Pacific");
 
         // create bar chart by passing this array
-        barChart(hurPerYear);
+        barChart(hurPerYearAtlantic, ".atlantic");
+        barChart(hurPerYearPacific, ".pacific");
 
-        function barChart(yearData) {
+        function barChart(yearData, chartSpace) {
             var margin = { top: 20, right: 20, bottom: 30, left: 40 },
                 width = 960 - margin.left - margin.right,
                 height = 500 - margin.top - margin.bottom;
@@ -211,7 +213,7 @@ class HurricaneCountGraph {
                 .scale(y)
                 .orient("left")
 
-            var svg = d3.select(".chart").append("svg")
+            var svg = d3.select(chartSpace).append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
@@ -241,10 +243,10 @@ class HurricaneCountGraph {
                 .data(yearData)
                 .enter().append("rect")
                 .attr("class", "bar")
-                .attr("x", function (d) { return x(d); })
+                .attr("x", function (d) { return x(d.value); })
                 .attr("width", barWidth)
-                .attr("y", function (d) { return y(d); })
-                .attr("height", function (d) { return y(d) });
+                .attr("y", function (d) { return y(d.value); })
+                .attr("height", function (d) { return height - y(d.value); });
 
         } 
         /*var data = [4, 8, 15, 16, 23, 42];
@@ -262,16 +264,17 @@ class HurricaneCountGraph {
 
         }*/
 
-        function countYears(d) { // helper function to count hurricanes per year
+        function countYears(ds, basin) { // helper function to count hurricanes per year
             var yearCounts = new Array(145); // static since we have data from 1871 - 2015
+            
             for (var i = 0; i < 145; i++) {
                 yearCounts[i] = 0;
             }
 
-            for (var i = 0; i <= d.length; i++) {
-
-                yearCounts[d[i].year - 1871] += 1;
-
+            for (var i = 0; i <= ds.length; i++) {
+                if (ds[i].basin == basin) {
+                    yearCounts[ds[i].year - 1871] += 1;
+                }
             }
 
             return yearCounts;
