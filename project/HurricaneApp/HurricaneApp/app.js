@@ -211,9 +211,10 @@ var HurricaneCountGraph = (function () {
                 .data(yearData)
                 .enter().append("rect")
                 .attr("class", "bar")
-                .attr("width", barWidth);
-            //.attr("y", function (d) { return y(d.value); })
-            //.attr("height", function (d) { return height - y(d.value); });
+                .attr("x", function (d, i) { return x(d[i]); })
+                .attr("width", barWidth)
+                .attr("y", function (d, i) { return y(d[i]); })
+                .attr("height", function (d, i) { return height - y(d[i]); });
         }
         /*var data = [4, 8, 15, 16, 23, 42];
 
