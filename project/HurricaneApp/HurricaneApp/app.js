@@ -15,7 +15,7 @@ $(function () {
     // we also want to remove the listener (on hurricaneData) once the selection is made.
     var setSelection = function () {
         if (app.hurricaneData.Hurricanes.length > 5 && app.hurricaneSelection.Value.length == 0) {
-            app.hurricaneSelection.Value = app.hurricaneData.Hurricanes.slice(0, 20);
+            app.hurricaneSelection.Value = app.hurricaneData.Hurricanes.slice(0, 5);
             app.hurricaneData.Changed.off(setSelection);
         }
     };
@@ -206,6 +206,7 @@ var HurricaneMap = (function () {
         this.initUI();
     }
     HurricaneMap.prototype.initUI = function () {
+        var southWest = L.latLng(-200, -90), northEast = L.latLng(100, 90), bounds = L.latLngBounds(southWest, northEast);
         var map = L.map("HurricaneMap").setView([35, -100], 2);
         /*L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -213,7 +214,9 @@ var HurricaneMap = (function () {
         L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
             subdomains: ['a', 'b', 'c', 'd'],
-            maxZoom: 19
+            maxZoom: 19,
+            minZoom: 2,
+            bounds: bounds
         }).addTo(map);
         this.map = map;
         var d3Overlay = L.d3SvgOverlay(function (selection, projection) {
