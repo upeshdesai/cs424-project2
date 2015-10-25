@@ -264,7 +264,7 @@ class HurricaneCountGraph {
 
         }*/
 
-        function countYears(ds, basin) { // helper function to count hurricanes per year
+        function countYears(ds: HurricaneData.Hurricane[], basin: string) { // helper function to count hurricanes per year
             var yearCounts = new Array(145); // static since we have data from 1871 - 2015
             
             for (var i = 0; i < 145; i++) {
