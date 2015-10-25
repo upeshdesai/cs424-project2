@@ -223,7 +223,7 @@ var HurricaneMap = (function () {
                 .attr("cy", function (d) { return projection.latLngToLayerPoint(d.track[0].coordinates).y; })
                 .enter()
                 .append("circle")
-                .attr("r", 1000)
+                .attr("r", 10)
                 .attr("fill", "red");
             //var updateSelection = selection.selectAll('circle').data(dataset);
             //updateSelection.enter()
