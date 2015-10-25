@@ -1,14 +1,32 @@
 /// <reference path="lib/jquery/jquery.d.ts" />
 /// <reference path="lib/d3/d3.d.ts" />
 /// <reference path="lib/leaflet/leaflet.d.ts" />
+/// <reference path="lib/leaflet/d3svgoverlay/L.D3SvgOverlay.d.ts" />
 /// <reference path="common.ts" />
 var app;
-$(function () { app = new App(); app.init(); });
+$(function () {
+    app = new App();
+    app.init();
+    //app.hurricaneData.load("data/hurdat2-atlantic-lite.csv");
+    //app.hurricaneData.load("data/hurdat2-pacific-lite.csv");
+    app.hurricaneData.load("data/hurdat2-lite.json");
+    // Set selection to first five hurricanes 
+    // It's convoluted because this needs to executed once the data is loaded. And then
+    // we also want to remove the listener (on hurricaneData) once the selection is made.
+    var setSelection = function () {
+        if (app.hurricaneData.Hurricanes.length > 5 && app.hurricaneSelection.Value.length == 0) {
+            app.hurricaneSelection.Value = app.hurricaneData.Hurricanes.slice(0, 20);
+            app.hurricaneData.Changed.off(setSelection);
+        }
+    };
+    app.hurricaneData.Changed.on(setSelection);
+});
 var App = (function () {
     function App() {
     }
     App.prototype.init = function () {
         this.hurricaneData = new HurricaneData();
+        this.hurricaneSelection = new HurricaneSelection();
         this.hurricaneList = new HurricaneList();
         this.hurricaneMap = new HurricaneMap();
         this.hurricaneCountGraph = new HurricaneCountGraph();
@@ -18,15 +36,8 @@ var App = (function () {
 })();
 var HurricaneData = (function () {
     function HurricaneData() {
-        var _this = this;
         this.hurricanes = new Array();
         this.onChanged = new common.LiteEvent();
-        var addData = function (data) {
-            _this.hurricanes = _this.hurricanes.concat(data);
-            _this.onChanged.trigger();
-        };
-        HurricaneData.loadHurdat("data/hurdat2-atlantic.csv", addData);
-        HurricaneData.loadHurdat("data/hurdat2-pacific.csv", addData);
     }
     Object.defineProperty(HurricaneData.prototype, "Changed", {
         get: function () { return this.onChanged; },
@@ -38,12 +49,27 @@ var HurricaneData = (function () {
         enumerable: true,
         configurable: true
     });
+    HurricaneData.prototype.load = function (path) {
+        var _this = this;
+        var addData = function (data) {
+            _this.hurricanes = _this.hurricanes.concat(data);
+            _this.onChanged.trigger();
+        };
+        if (/^.*\.json$/.test(path)) {
+            d3.json(path, function (err, data) {
+                addData(data);
+            });
+        }
+        else {
+            HurricaneData.loadHurdat(path, addData);
+        }
+    };
     HurricaneData.loadHurdat = function (path, onLoad) {
         function capitalize(s) {
             return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
         }
         function nuller(val) {
-            return val === -999 ? null : val;
+            return (val === -999 || val === -99) ? null : val;
         }
         function parseLatLng(x) {
             var negate = false;
@@ -105,6 +131,26 @@ var HurricaneData = (function () {
     };
     return HurricaneData;
 })();
+var HurricaneSelection = (function () {
+    function HurricaneSelection() {
+        this.onChanged = new common.LiteEvent();
+        this.value = new Array();
+    }
+    Object.defineProperty(HurricaneSelection.prototype, "Changed", {
+        get: function () {
+            return this.onChanged;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(HurricaneSelection.prototype, "Value", {
+        get: function () { return this.value; },
+        set: function (v) { this.value = v; this.onChanged.trigger(); },
+        enumerable: true,
+        configurable: true
+    });
+    return HurricaneSelection;
+})();
 // Static nested classes inside HurricaneData
 var HurricaneData;
 (function (HurricaneData) {
@@ -132,37 +178,63 @@ var HurricaneList = (function () {
         this.initUI();
     }
     HurricaneList.prototype.initUI = function () {
-        var listBox = d3.select("#HurricaneList [name=body]")
-            .append("select").attr("multiple", "true");
+        var listBox = $("#HurricaneList [name=body]")
+            .append("select").addClass("hurricaneSelect").attr("multiple", "true");
         app.hurricaneData.Changed.on(function () {
-            listBox
+            d3.select("#HurricaneList [name=body] select.hurricaneSelect")
                 .selectAll("option")
                 .data(app.hurricaneData.Hurricanes)
                 .enter()
                 .append("option")
                 .attr("value", function (d) { return d.name; })
+                .datum(function (d) { return d; })
                 .text(function (d) { return d.name; });
         });
+        /*listBox.change((evt) => {
+            let list = new Array<HurricaneData.Hurricane>();
+            $("#HurricaneList [name=body] select.hurricaneSelect option:selected").each((i, elem) => {
+                list.push(d3.select(elem).datum());
+            });
+            app.hurricaneSelection.Value = list;
+        });*/
     };
     return HurricaneList;
 })();
 var HurricaneMap = (function () {
     function HurricaneMap() {
+        this.pane = { svg: null, g: null };
         this.initUI();
     }
     HurricaneMap.prototype.initUI = function () {
-        var map = L.map("HurricaneMap").setView([30, -105], 3);
+        var map = L.map("HurricaneMap").setView([35, -100], 2);
         /*L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);*/
         L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
             subdomains: ['a', 'b', 'c', 'd'],
-            maxZoom: 19,
-            minZoom: 1,
-            continuousWorld: false,
-            noWrap: true
+            maxZoom: 19
         }).addTo(map);
+        this.map = map;
+        var d3Overlay = L.d3SvgOverlay(function (selection, projection) {
+            selection.selectAll("circle")
+                .data(app.hurricaneSelection.Value)
+                .attr("cx", function (d) { return projection.latLngToLayerPoint(d.track[0].coordinates).x; })
+                .attr("cy", function (d) { return projection.latLngToLayerPoint(d.track[0].coordinates).y; })
+                .enter()
+                .append("circle")
+                .attr("r", 1000)
+                .attr("fill", "red");
+            //var updateSelection = selection.selectAll('circle').data(dataset);
+            //updateSelection.enter()
+            //   .append('circle')
+            //  .attr("cx", function (d) { return projection.latLngToLayerPoint(d.latLng).x; })
+            // .attr("cy", function (d) { return projection.latLngToLayerPoint(d.latLng).y; });
+        });
+        d3Overlay.addTo(map);
+        app.hurricaneSelection.Changed.on(function () {
+            d3Overlay.draw();
+        });
     };
     return HurricaneMap;
 })();
@@ -172,11 +244,11 @@ var HurricaneCountGraph = (function () {
     }
     HurricaneCountGraph.prototype.initUI = function () {
         // count hurricanes per year
-        var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
-        var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
+        //var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
+        //var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
         // create bar chart by passing this array
-        barChart(hurPerYearAtlantic, ".atlantic");
-        barChart(hurPerYearPacific, ".pacific");
+        //barChart(hurPerYearAtlantic, ".atlantic");
+        //barChart(hurPerYearPacific, ".pacific");
         function barChart(yearData, chartSpace) {
             var margin = { top: 20, right: 20, bottom: 30, left: 40 }, width = 960 - margin.left - margin.right, height = 500 - margin.top - margin.bottom;
             var x = d3.scale.linear()

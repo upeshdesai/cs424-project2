@@ -1,13 +1,32 @@
 ﻿/// <reference path="lib/jquery/jquery.d.ts" />
 /// <reference path="lib/d3/d3.d.ts" />
 /// <reference path="lib/leaflet/leaflet.d.ts" />
+/// <reference path="lib/leaflet/d3svgoverlay/L.D3SvgOverlay.d.ts" />
 /// <reference path="common.ts" />
 
 var app: App;
-$(() => { app = new App(); app.init(); });
+$(() => {
+    app = new App();
+    app.init();
 
+    //app.hurricaneData.load("data/hurdat2-atlantic-lite.csv");
+    //app.hurricaneData.load("data/hurdat2-pacific-lite.csv");
+    app.hurricaneData.load("data/hurdat2-lite.json");
+
+    // Set selection to first five hurricanes 
+    // It's convoluted because this needs to executed once the data is loaded. And then
+    // we also want to remove the listener (on hurricaneData) once the selection is made.
+    let setSelection = () => {
+        if (app.hurricaneData.Hurricanes.length > 5 && app.hurricaneSelection.Value.length == 0) {
+            app.hurricaneSelection.Value = app.hurricaneData.Hurricanes.slice(0, 20);
+            app.hurricaneData.Changed.off(setSelection);
+        }
+    };
+    app.hurricaneData.Changed.on(setSelection);
+});
 class App {
     public hurricaneData: HurricaneData;
+    public hurricaneSelection: HurricaneSelection;
     public hurricaneList: HurricaneList;
     public hurricaneMap: HurricaneMap;
     public hurricaneCountGraph: HurricaneCountGraph;
@@ -18,6 +37,7 @@ class App {
 
     public init() {
         this.hurricaneData = new HurricaneData();
+        this.hurricaneSelection = new HurricaneSelection();
         this.hurricaneList = new HurricaneList();
         this.hurricaneMap = new HurricaneMap();
         this.hurricaneCountGraph = new HurricaneCountGraph();
@@ -29,17 +49,24 @@ class HurricaneData {
     private hurricanes: HurricaneData.Hurricane[] = new Array<HurricaneData.Hurricane>();
     private onChanged = new common.LiteEvent<void>();
 
-    constructor() {
+    public get Changed(): common.ILiteEvent<void> { return this.onChanged; }
+    public get Hurricanes(): HurricaneData.Hurricane[] { return this.hurricanes; }
+
+    public load(path: string): void {
         let addData = (data) => {
             this.hurricanes = this.hurricanes.concat(data);
             this.onChanged.trigger();
         };
-        HurricaneData.loadHurdat("data/hurdat2-atlantic.csv", addData);
-        HurricaneData.loadHurdat("data/hurdat2-pacific.csv", addData);
-    }
 
-    public get Changed(): common.ILiteEvent<void> { return this.onChanged; }
-    public get Hurricanes(): HurricaneData.Hurricane[] { return this.hurricanes; }
+        if (/^.*\.json$/.test(path)) {
+            d3.json(path, (err, data) => {
+                addData(data);
+            });
+        }
+        else {
+            HurricaneData.loadHurdat(path, addData);
+        }
+    }
 
     private static loadHurdat(path: string, onLoad: (data: HurricaneData.Hurricane[]) => void): void {
         function capitalize(s: string): string {
@@ -47,7 +74,7 @@ class HurricaneData {
         }
 
         function nuller(val) {
-            return val === -999 ? null : val;
+            return (val === -999 || val === -99) ? null : val;
         }
 
         function parseLatLng(x) {
@@ -59,7 +86,7 @@ class HurricaneData {
             return x;
         }
 
-        function parseDate(x, y) : number {
+        function parseDate(x, y): number {
             var year = x.substr(0, 4);
             var month = x.substr(4, 2);
             var day = x.substr(6, 2);
@@ -86,7 +113,7 @@ class HurricaneData {
             return track;
         }
 
-        function parseHurdat(rows : string[][]): HurricaneData.Hurricane[] {
+        function parseHurdat(rows: string[][]): HurricaneData.Hurricane[] {
             var hurricanes = [];
             for (var i = 0; i < rows.length;) {
                 var row = rows[i];
@@ -113,6 +140,18 @@ class HurricaneData {
             onLoad(parseHurdat(rows));
         });
     }
+}
+
+class HurricaneSelection {
+    private onChanged = new common.LiteEvent<void>();
+    private value = new Array<HurricaneData.Hurricane>();
+
+    public get Changed(): common.ILiteEvent<void> {
+        return this.onChanged;
+    }
+
+    public get Value(): HurricaneData.Hurricane[] { return this.value; }
+    public set Value(v: HurricaneData.Hurricane[]) { this.value = v; this.onChanged.trigger(); }
 }
 
 // Static nested classes inside HurricaneData
@@ -148,39 +187,70 @@ class HurricaneList {
     }
 
     private initUI(): void {
-        var listBox = d3.select("#HurricaneList [name=body]")
-            .append("select").attr("multiple", "true");
+        var listBox = $("#HurricaneList [name=body]")
+            .append("select").addClass("hurricaneSelect").attr("multiple", "true");
         app.hurricaneData.Changed.on(() => {
-            listBox
+            d3.select("#HurricaneList [name=body] select.hurricaneSelect")
                 .selectAll("option")
                 .data(app.hurricaneData.Hurricanes)
                 .enter()
                 .append("option")
                 .attr("value", (d) => { return d.name; })
+                .datum((d) => d)
                 .text((d) => { return d.name; });
         });
+        /*listBox.change((evt) => {
+            let list = new Array<HurricaneData.Hurricane>();
+            $("#HurricaneList [name=body] select.hurricaneSelect option:selected").each((i, elem) => {
+                list.push(d3.select(elem).datum());
+            });
+            app.hurricaneSelection.Value = list;
+        });*/
     }
 }
 
 class HurricaneMap {
+    private map: L.Map;
+    private pane = { svg: <d3.Selection<any>>null, g: <d3.Selection<any>>null };
+
     constructor() {
         this.initUI();
     }
 
     private initUI() {
-        
-        var map = L.map("HurricaneMap").setView([30, -105], 3);
+        var map = L.map("HurricaneMap").setView([35, -100], 2);
         /*L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);*/
         L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
             subdomains: ['a', 'b', 'c', 'd'],
-            maxZoom: 19,
-            minZoom: 1,
-            continuousWorld: false,
-            noWrap: true
+            maxZoom: 19
         }).addTo(map);
+        this.map = map;
+
+        var d3Overlay = L.d3SvgOverlay(function (selection, projection) {
+            selection.selectAll("circle")
+                .data(app.hurricaneSelection.Value)
+                .attr("cx", (d) => { return projection.latLngToLayerPoint(d.track[0].coordinates).x; })
+                .attr("cy", (d) => { return projection.latLngToLayerPoint(d.track[0].coordinates).y; })
+                .enter()
+                .append("circle")
+                .attr("r", 1000)
+                .attr("fill", "red");
+
+            //var updateSelection = selection.selectAll('circle').data(dataset);
+            //updateSelection.enter()
+            //   .append('circle')
+            //  .attr("cx", function (d) { return projection.latLngToLayerPoint(d.latLng).x; })
+            // .attr("cy", function (d) { return projection.latLngToLayerPoint(d.latLng).y; });
+
+        });
+        d3Overlay.addTo(map);
+
+        app.hurricaneSelection.Changed.on(() => {
+            d3Overlay.draw();
+        });
     }
 }
 
@@ -191,12 +261,12 @@ class HurricaneCountGraph {
 
     private initUI() {
         // count hurricanes per year
-        var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
-        var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
+        //var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
+        //var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
 
         // create bar chart by passing this array
-        barChart(hurPerYearAtlantic, ".atlantic");
-        barChart(hurPerYearPacific, ".pacific");
+        //barChart(hurPerYearAtlantic, ".atlantic");
+        //barChart(hurPerYearPacific, ".pacific");
 
         function barChart(yearData, chartSpace) {
             var margin = { top: 20, right: 20, bottom: 30, left: 40 },
