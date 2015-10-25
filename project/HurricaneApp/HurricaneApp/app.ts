@@ -168,14 +168,18 @@ class HurricaneMap {
     }
 
     private initUI() {
-        var map = L.map("HurricaneMap").setView([51.5, -0.09], 13);
+        
+        var map = L.map("HurricaneMap").setView([30, -105], 3);
         /*L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);*/
         L.tileLayer('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
             subdomains: ['a', 'b', 'c', 'd'],
-            maxZoom: 19
+            maxZoom: 19,
+            minZoom: 1,
+            continuousWorld: false,
+            noWrap: true
         }).addTo(map);
     }
 }
@@ -187,8 +191,8 @@ class HurricaneCountGraph {
 
     private initUI() {
         // count hurricanes per year
-        var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "Atlantic");
-        var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "Pacific");
+        var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
+        var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
 
         // create bar chart by passing this array
         barChart(hurPerYearAtlantic, ".atlantic");
@@ -272,7 +276,7 @@ class HurricaneCountGraph {
             }
 
             for (var i = 0; i <= ds.length; i++) {
-                if (ds[i].basin == basin) {
+                if (basin == ds[i].basin) {
                     yearCounts[ds[i].year - 1871] += 1;
                 }
             }
@@ -286,4 +290,3 @@ class HurricaneCountGraph {
 
 class HurricaneIntensityGraph {
 }
-
