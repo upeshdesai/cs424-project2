@@ -247,11 +247,11 @@ var HurricaneCountGraph = (function () {
     }
     HurricaneCountGraph.prototype.initUI = function () {
         // count hurricanes per year
-        //var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
-        //var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
+        var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
+        var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
         // create bar chart by passing this array
-        //barChart(hurPerYearAtlantic, ".atlantic");
-        //barChart(hurPerYearPacific, ".pacific");
+        barChart(hurPerYearAtlantic, ".atlantic");
+        barChart(hurPerYearPacific, ".pacific");
         function barChart(yearData, chartSpace) {
             var margin = { top: 20, right: 20, bottom: 30, left: 40 }, width = 960 - margin.left - margin.right, height = 500 - margin.top - margin.bottom;
             var x = d3.scale.linear()
@@ -313,7 +313,7 @@ var HurricaneCountGraph = (function () {
             for (var i = 0; i < 145; i++) {
                 yearCounts[i] = 0;
             }
-            for (var i = 0; i <= ds.length; i++) {
+            for (var i = 0; i < ds.length; i++) {
                 if (basin == ds[i].basin) {
                     yearCounts[ds[i].year - 1871] += 1;
                 }
@@ -328,4 +328,3 @@ var HurricaneIntensityGraph = (function () {
     }
     return HurricaneIntensityGraph;
 })();
-//# sourceMappingURL=app.js.map
