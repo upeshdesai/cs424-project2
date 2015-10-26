@@ -31,7 +31,6 @@
     <TypeScriptCompile Include="common.ts" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="data\hurdat2-lite.json" />
     <None Include="web.Debug.config">
       <DependentUpon>web.config</DependentUpon>
     </None>

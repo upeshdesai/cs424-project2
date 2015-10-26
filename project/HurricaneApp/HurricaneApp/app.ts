@@ -266,12 +266,16 @@ class HurricaneCountGraph {
 
     private initUI() {
         // count hurricanes per year
-        var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
-        var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
+        //var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
+        //var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
+
+        //tesing:
+        var hurPerYearAtlantic = [5, 10, 15];
+
 
         // create bar chart by passing this array
         barChart(hurPerYearAtlantic, ".atlantic");
-        barChart(hurPerYearPacific, ".pacific");
+        //barChart(hurPerYearPacific, ".pacific");
 
         function barChart(yearData, chartSpace) {
             var margin = { top: 20, right: 20, bottom: 30, left: 40 },

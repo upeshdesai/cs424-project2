@@ -4,7 +4,7 @@
 /// <reference path="lib/leaflet/d3svgoverlay/L.D3SvgOverlay.d.ts" />
 /// <reference path="common.ts" />
 var app;
-$(function () {
+$(() => {
     app = new App();
     app.init();
     //app.hurricaneData.load("data/hurdat2-atlantic-lite.csv");
@@ -13,7 +13,7 @@ $(function () {
     // Set selection to first five hurricanes 
     // It's convoluted because this needs to executed once the data is loaded. And then
     // we also want to remove the listener (on hurricaneData) once the selection is made.
-    var setSelection = function () {
+    let setSelection = () => {
         if (app.hurricaneData.Hurricanes.length > 5 && app.hurricaneSelection.Value.length == 0) {
             app.hurricaneSelection.Value = app.hurricaneData.Hurricanes.slice(0, 5);
             app.hurricaneData.Changed.off(setSelection);
@@ -21,50 +21,40 @@ $(function () {
     };
     app.hurricaneData.Changed.on(setSelection);
 });
-var App = (function () {
-    function App() {
+class App {
+    constructor() {
     }
-    App.prototype.init = function () {
+    init() {
         this.hurricaneData = new HurricaneData();
         this.hurricaneSelection = new HurricaneSelection();
         this.hurricaneList = new HurricaneList();
         this.hurricaneMap = new HurricaneMap();
         this.hurricaneCountGraph = new HurricaneCountGraph();
         this.hurricaneIntensityGraph = new HurricaneIntensityGraph();
-    };
-    return App;
-})();
-var HurricaneData = (function () {
-    function HurricaneData() {
+    }
+}
+class HurricaneData {
+    constructor() {
         this.hurricanes = new Array();
         this.onChanged = new common.LiteEvent();
     }
-    Object.defineProperty(HurricaneData.prototype, "Changed", {
-        get: function () { return this.onChanged; },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(HurricaneData.prototype, "Hurricanes", {
-        get: function () { return this.hurricanes; },
-        enumerable: true,
-        configurable: true
-    });
-    HurricaneData.prototype.load = function (path) {
-        var _this = this;
-        var addData = function (data) {
-            _this.hurricanes = _this.hurricanes.concat(data);
-            _this.onChanged.trigger();
+    get Changed() { return this.onChanged; }
+    get Hurricanes() { return this.hurricanes; }
+    load(path) {
+        let addData = (data) => {
+            this.hurricanes = this.hurricanes.concat(data);
+            this.onChanged.trigger();
         };
         if (/^.*\.json$/.test(path)) {
-            d3.json(path, function (err, data) {
+            d3.json(path, (err, data) => {
                 addData(data);
             });
         }
         else {
             HurricaneData.loadHurdat(path, addData);
         }
-    };
-    HurricaneData.loadHurdat = function (path, onLoad) {
+    }
+    static loadHurdat(path, onLoad) {
         function capitalize(s) {
             return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
         }
@@ -96,8 +86,8 @@ var HurricaneData = (function () {
             track.coordinates = [parseLatLng(row[4]), parseLatLng(row[5])];
             track.maxWindSpeed = nuller(+row[6]);
             track.minPressure = nuller(+row[7]);
-            track.radii = (function () {
-                var radii = new HurricaneData.Radii();
+            track.radii = (() => {
+                let radii = new HurricaneData.Radii();
                 radii.kt34 = [+row[8], +row[9], +row[10], +row[11]].map(nuller);
                 radii.kt50 = [+row[12], +row[13], +row[14], +row[15]].map(nuller);
                 radii.kt64 = [+row[16], +row[17], +row[18], +row[19]].map(nuller);
@@ -128,67 +118,47 @@ var HurricaneData = (function () {
             var rows = d3.csv.parseRows(text);
             onLoad(parseHurdat(rows));
         });
-    };
-    return HurricaneData;
-})();
-var HurricaneSelection = (function () {
-    function HurricaneSelection() {
+    }
+}
+class HurricaneSelection {
+    constructor() {
         this.onChanged = new common.LiteEvent();
         this.value = new Array();
     }
-    Object.defineProperty(HurricaneSelection.prototype, "Changed", {
-        get: function () {
-            return this.onChanged;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(HurricaneSelection.prototype, "Value", {
-        get: function () { return this.value; },
-        set: function (v) { this.value = v; this.onChanged.trigger(); },
-        enumerable: true,
-        configurable: true
-    });
-    return HurricaneSelection;
-})();
+    get Changed() {
+        return this.onChanged;
+    }
+    get Value() { return this.value; }
+    set Value(v) { this.value = v; this.onChanged.trigger(); }
+}
 // Static nested classes inside HurricaneData
-var HurricaneData;
 (function (HurricaneData) {
-    var Hurricane = (function () {
-        function Hurricane() {
-        }
-        return Hurricane;
-    })();
+    class Hurricane {
+    }
     HurricaneData.Hurricane = Hurricane;
-    var TrackPoint = (function () {
-        function TrackPoint() {
-        }
-        return TrackPoint;
-    })();
+    class TrackPoint {
+    }
     HurricaneData.TrackPoint = TrackPoint;
-    var Radii = (function () {
-        function Radii() {
-        }
-        return Radii;
-    })();
+    class Radii {
+    }
     HurricaneData.Radii = Radii;
 })(HurricaneData || (HurricaneData = {}));
-var HurricaneList = (function () {
-    function HurricaneList() {
+class HurricaneList {
+    constructor() {
         this.initUI();
     }
-    HurricaneList.prototype.initUI = function () {
+    initUI() {
         var listBox = $("#HurricaneList [name=body]")
             .append("select").addClass("hurricaneSelect").attr("multiple", "true");
-        app.hurricaneData.Changed.on(function () {
+        app.hurricaneData.Changed.on(() => {
             d3.select("#HurricaneList [name=body] select.hurricaneSelect")
                 .selectAll("option")
                 .data(app.hurricaneData.Hurricanes)
                 .enter()
                 .append("option")
-                .attr("value", function (d) { return d.name; })
-                .datum(function (d) { return d; })
-                .text(function (d) { return d.name; });
+                .attr("value", (d) => { return d.name; })
+                .datum((d) => d)
+                .text((d) => { return d.name; });
         });
         /*listBox.change((evt) => {
             let list = new Array<HurricaneData.Hurricane>();
@@ -197,15 +167,14 @@ var HurricaneList = (function () {
             });
             app.hurricaneSelection.Value = list;
         });*/
-    };
-    return HurricaneList;
-})();
-var HurricaneMap = (function () {
-    function HurricaneMap() {
+    }
+}
+class HurricaneMap {
+    constructor() {
         this.pane = { svg: null, g: null };
         this.initUI();
     }
-    HurricaneMap.prototype.initUI = function () {
+    initUI() {
         var southWest = L.latLng(-200, -90), northEast = L.latLng(100, 90), bounds = L.latLngBounds(southWest, northEast);
         var map = L.map("HurricaneMap").setView([35, -100], 2);
         /*L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -222,8 +191,8 @@ var HurricaneMap = (function () {
         var d3Overlay = L.d3SvgOverlay(function (selection, projection) {
             selection.selectAll("circle")
                 .data(app.hurricaneSelection.Value)
-                .attr("cx", function (d) { return projection.latLngToLayerPoint(d.track[0].coordinates).x; })
-                .attr("cy", function (d) { return projection.latLngToLayerPoint(d.track[0].coordinates).y; })
+                .attr("cx", (d) => { return projection.latLngToLayerPoint(d.track[0].coordinates).x; })
+                .attr("cy", (d) => { return projection.latLngToLayerPoint(d.track[0].coordinates).y; })
                 .enter()
                 .append("circle")
                 .attr("r", 1)
@@ -235,23 +204,24 @@ var HurricaneMap = (function () {
             // .attr("cy", function (d) { return projection.latLngToLayerPoint(d.latLng).y; });
         });
         d3Overlay.addTo(map);
-        app.hurricaneSelection.Changed.on(function () {
+        app.hurricaneSelection.Changed.on(() => {
             d3Overlay.draw();
         });
-    };
-    return HurricaneMap;
-})();
-var HurricaneCountGraph = (function () {
-    function HurricaneCountGraph() {
+    }
+}
+class HurricaneCountGraph {
+    constructor() {
         this.initUI();
     }
-    HurricaneCountGraph.prototype.initUI = function () {
+    initUI() {
         // count hurricanes per year
-        var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
-        var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
+        //var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
+        //var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
+        //tesing:
+        var hurPerYearAtlantic = [5, 10, 15];
         // create bar chart by passing this array
         barChart(hurPerYearAtlantic, ".atlantic");
-        barChart(hurPerYearPacific, ".pacific");
+        //barChart(hurPerYearPacific, ".pacific");
         function barChart(yearData, chartSpace) {
             var margin = { top: 20, right: 20, bottom: 30, left: 40 }, width = 960 - margin.left - margin.right, height = 500 - margin.top - margin.bottom;
             var x = d3.scale.linear()
@@ -320,11 +290,7 @@ var HurricaneCountGraph = (function () {
             }
             return yearCounts;
         }
-    };
-    return HurricaneCountGraph;
-})();
-var HurricaneIntensityGraph = (function () {
-    function HurricaneIntensityGraph() {
     }
-    return HurricaneIntensityGraph;
-})();
+}
+class HurricaneIntensityGraph {
+}

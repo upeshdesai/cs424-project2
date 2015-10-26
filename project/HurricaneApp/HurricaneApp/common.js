@@ -1,21 +1,20 @@
 var common;
 (function (common) {
-    var LiteEvent = (function () {
-        function LiteEvent() {
+    class LiteEvent {
+        constructor() {
             this.handlers = [];
         }
-        LiteEvent.prototype.on = function (handler) {
+        on(handler) {
             this.handlers.push(handler);
-        };
-        LiteEvent.prototype.off = function (handler) {
-            this.handlers = this.handlers.filter(function (h) { return h !== handler; });
-        };
-        LiteEvent.prototype.trigger = function (data) {
+        }
+        off(handler) {
+            this.handlers = this.handlers.filter(h => h !== handler);
+        }
+        trigger(data) {
             if (this.handlers) {
-                this.handlers.slice(0).forEach(function (h) { return h(data); });
+                this.handlers.slice(0).forEach(h => h(data));
             }
-        };
-        return LiteEvent;
-    })();
+        }
+    }
     common.LiteEvent = LiteEvent;
 })(common || (common = {}));
