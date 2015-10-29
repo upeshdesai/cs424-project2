@@ -266,26 +266,28 @@ class HurricaneCountGraph {
 
     private initUI() {
         // count hurricanes per year
-        //var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
-        //var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
+        var hurPerYearAtlantic = countYears(app.hurricaneData.Hurricanes, "AL");
+        var hurPerYearPacific = countYears(app.hurricaneData.Hurricanes, "EP");
 
-        //tesing:
-        var hurPerYearAtlantic = [5, 10, 15];
+        //testing:
+        //var hurPerYearAtlantic = [5, 10, 15];
 
 
         // create bar chart by passing this array
-        barChart(hurPerYearAtlantic, ".atlantic");
-        //barChart(hurPerYearPacific, ".pacific");
+        barChart(".atlantic", hurPerYearAtlantic);
+        barChart(".pacific", hurPerYearPacific);
 
-        function barChart(yearData, chartSpace) {
+        function barChart(chartSpace: string, yearData = [] ) {
             var margin = { top: 20, right: 20, bottom: 30, left: 40 },
                 width = 960 - margin.left - margin.right,
                 height = 500 - margin.top - margin.bottom;
 
-            var x = d3.scale.linear()
-                .range([0, width]);
+            var x = d3.scale.ordinal()
+                .domain(yearData.map(function (d) { return d.year; }))
+                .rangeRoundBands([0, width], .1);
 
             var y = d3.scale.linear()
+                .domain([0, d3.max(yearData, function (d) { return d.count; }) + d3.min(yearData, function (d) { return d.count; })])
                 .range([height, 0]);
 
             var xAxis = d3.svg.axis()
@@ -295,6 +297,7 @@ class HurricaneCountGraph {
             var yAxis = d3.svg.axis()
                 .scale(y)
                 .orient("left")
+                .ticks(10);
 
             var svg = d3.select(chartSpace).append("svg")
                 .attr("width", width + margin.left + margin.right)
@@ -304,32 +307,33 @@ class HurricaneCountGraph {
 
             var barWidth = width / yearData.length;
 
-            x.domain([1871, 2015]);
-            y.domain([0, yearData]);
-
             svg.append("g")
                 .attr("class", "x axis")
                 .attr("transform", "translate(0," + height + ")")
-                .call(xAxis);
+                .call(xAxis)
+                .selectAll("text")
+                .style("text-anchor", "end")
+                .attr("dx", "-.8em")
+                .attr("dy", ".15em")
+                .attr("transform", "rotate(-65)");
 
             svg.append("g")
                 .attr("class", "y axis")
-                .call(yAxis)
-                .append("text")
-                .attr("transform", "rotate(-90)")
-                .attr("y", 6)
-                .attr("dy", ".71em")
-                .style("text-anchor", "end")
-                .text("Frequency");
+                .call(yAxis);
 
             svg.selectAll(".bar") //FIX THIS ALL
                 .data(yearData)
                 .enter().append("rect")
-                .attr("class", "bar")
-                .attr("x", function (d, i) { return x(d[i]); })
-                .attr("width", barWidth)
-                .attr("y", function (d, i) { return y(d[i]); })
-                .attr("height", function (d, i) { return height - y(d[i]); });
+                .attr("x", function (d) {
+                    return x(d.year);
+                })
+                .attr("y", function (d) {
+                    return y(d.count);
+                })
+                .attr("height", function (d) {
+                    return height - y(d.count);
+                })
+                .attr("width", x.rangeBand())
 
         } 
         /*var data = [4, 8, 15, 16, 23, 42];
@@ -348,15 +352,18 @@ class HurricaneCountGraph {
         }*/
 
         function countYears(ds: HurricaneData.Hurricane[], basin: string) { // helper function to count hurricanes per year
-            var yearCounts = new Array(145); // static since we have data from 1871 - 2015
+            var yearCounts = []; // static since we have data from 1871 - 2015
             
-            for (var i = 0; i < 145; i++) {
-                yearCounts[i] = 0;
+            for (var i = 1851; i <= 2014; i++) {
+                yearCounts.push({
+                    year: i,
+                    count: 0
+                });
             }
 
             for (var i = 0; i < ds.length; i++) {
                 if (basin == ds[i].basin) {
-                    yearCounts[ds[i].year - 1871] += 1;
+                    yearCounts[ds[i].year - 1871].count++;
                 }
             }
 

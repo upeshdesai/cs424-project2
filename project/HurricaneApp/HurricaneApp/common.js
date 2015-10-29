@@ -18,3 +18,4 @@ var common;
     }
     common.LiteEvent = LiteEvent;
 })(common || (common = {}));
+//# sourceMappingURL=common.js.map
