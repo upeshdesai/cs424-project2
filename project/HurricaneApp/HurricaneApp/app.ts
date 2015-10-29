@@ -261,7 +261,7 @@ class HurricaneMap {
 
 class HurricaneCountGraph {
     constructor() {
-        this.initUI();
+        this.initUI();  
     }
 
     private initUI() {
@@ -274,8 +274,8 @@ class HurricaneCountGraph {
 
 
         // create bar chart by passing this array
-        barChart(".atlantic", hurPerYearAtlantic);
-        barChart(".pacific", hurPerYearPacific);
+        barChart("#atlantic", hurPerYearAtlantic);
+        barChart("#pacific", hurPerYearPacific);
 
         function barChart(chartSpace: string, yearData = [] ) {
             var margin = { top: 20, right: 20, bottom: 30, left: 40 },

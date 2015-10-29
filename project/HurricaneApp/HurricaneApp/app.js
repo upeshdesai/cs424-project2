@@ -252,8 +252,8 @@ var HurricaneCountGraph = (function () {
         //testing:
         //var hurPerYearAtlantic = [5, 10, 15];
         // create bar chart by passing this array
-        barChart(".atlantic", hurPerYearAtlantic);
-        barChart(".pacific", hurPerYearPacific);
+        barChart("#atlantic", hurPerYearAtlantic);
+        barChart("#pacific", hurPerYearPacific);
         function barChart(chartSpace, yearData) {
             if (yearData === void 0) { yearData = []; }
             var margin = { top: 20, right: 20, bottom: 30, left: 40 }, width = 960 - margin.left - margin.right, height = 500 - margin.top - margin.bottom;
