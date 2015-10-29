@@ -364,7 +364,7 @@ class HurricaneCountGraph {
 
             for (var i = 0; i < ds.length; i++) {
                 if (basin == ds[i].basin) {
-                    yearCounts[ds[i].year - 1871].count++;
+                    yearCounts[ds[i].year - 1851].count++;
                 }
             }
 
