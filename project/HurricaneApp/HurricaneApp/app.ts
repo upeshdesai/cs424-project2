@@ -9,9 +9,9 @@ $(() => {
     app = new App();
     app.init();
 
-    //app.hurricaneData.load("data/hurdat2-atlantic-lite.csv");
-    //app.hurricaneData.load("data/hurdat2-pacific-lite.csv");
-    app.hurricaneData.load("data/hurdat2-lite.json");
+    app.hurricaneData.load("data/hurdat2-atlantic-lite.csv");
+    app.hurricaneData.load("data/hurdat2-pacific-lite.csv");
+    //app.hurricaneData.load("data/hurdat2-lite.json");
 
     // Set selection to first five hurricanes 
     // It's convoluted because this needs to executed once the data is loaded. And then

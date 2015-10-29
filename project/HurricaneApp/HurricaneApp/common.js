@@ -1,20 +1,22 @@
 var common;
 (function (common) {
-    class LiteEvent {
-        constructor() {
+    var LiteEvent = (function () {
+        function LiteEvent() {
             this.handlers = [];
         }
-        on(handler) {
+        LiteEvent.prototype.on = function (handler) {
             this.handlers.push(handler);
-        }
-        off(handler) {
-            this.handlers = this.handlers.filter(h => h !== handler);
-        }
-        trigger(data) {
+        };
+        LiteEvent.prototype.off = function (handler) {
+            this.handlers = this.handlers.filter(function (h) { return h !== handler; });
+        };
+        LiteEvent.prototype.trigger = function (data) {
             if (this.handlers) {
-                this.handlers.slice(0).forEach(h => h(data));
+                this.handlers.slice(0).forEach(function (h) { return h(data); });
             }
-        }
-    }
+        };
+        return LiteEvent;
+    })();
     common.LiteEvent = LiteEvent;
 })(common || (common = {}));
+//# sourceMappingURL=common.js.map
