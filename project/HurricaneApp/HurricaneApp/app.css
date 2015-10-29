@@ -16,7 +16,7 @@ span {
     height: 10em;
 }
 
-.atlantic {
+#atlantic {
   font: 10px sans-serif;
   background-color: steelblue;
   text-align: right;
@@ -27,7 +27,7 @@ span {
   height: 500px;
 }
 
-.pacific {
+#pacific {
   font: 10px sans-serif;
   background-color: steelblue;
   text-align: right;
