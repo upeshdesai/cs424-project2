@@ -300,7 +300,7 @@ var HurricaneCountGraph = (function () {
                 .attr("height", function (d) {
                 return height - y(d.count);
             })
-                .attr("width", x.rangeBand())
+                .attr("width", x.rangeBand() - 1)
                 .attr("fill", "#ffffff");
         }
         /*var data = [4, 8, 15, 16, 23, 42];

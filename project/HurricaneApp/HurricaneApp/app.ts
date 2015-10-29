@@ -333,7 +333,7 @@ class HurricaneCountGraph {
                 .attr("height", function (d) {
                     return height - y(d.count);
                 })
-                .attr("width", x.rangeBand())
+                .attr("width", x.rangeBand()-1)
                 .attr("fill", "#ffffff");
 
         } 
