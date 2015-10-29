@@ -302,4 +302,3 @@ class HurricaneCountGraph {
 }
 class HurricaneIntensityGraph {
 }
-//# sourceMappingURL=app.js.map
