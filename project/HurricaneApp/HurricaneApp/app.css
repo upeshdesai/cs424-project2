@@ -23,6 +23,8 @@ span {
   padding: 3px;
   margin: 1px;
   color: white;
+  width: 1000px;
+  height: 500px;
 }
 
 .pacific {
@@ -32,4 +34,6 @@ span {
   padding: 3px;
   margin: 1px;
   color: white;
+  width: 1000px;
+  height: 500px;
 }
