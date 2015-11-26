@@ -334,7 +334,7 @@ class HurricaneCountGraph {
                     return height - y(d.count);
                 })
                 .attr("width", x.rangeBand()-1)
-                .attr("fill", "#000000");
+                .attr("fill", "#ffffff");
 
         } 
         /*var data = [4, 8, 15, 16, 23, 42];
